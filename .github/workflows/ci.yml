@@ -4,10 +4,14 @@ on:
   push:
     branches:
       - "main"
+  pull_request:
 
 jobs:
   deploy-storybook:
     runs-on: ubuntu-latest
+    env:
+      SURGE_BASE_SUBDOMAIN: sno2wman-storybook-surge
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -25,8 +29,27 @@ jobs:
           run_install: |
             - args: [--frozen-lockfile]
       - run: pnpm run storybook:build
-      - run: pnpx --no-install surge ./storybook-static https://$SURGE_SUBDOMAIN.surge.sh  --token $SURGE_TOKEN
+      - if: ${{ github.event_name == 'push' }}
+        run: |
+          pnpx --no-install \
+            surge ./storybook-static \
+            https://${{ env.SURGE_SUBDOMAIN }}.surge.sh \
+            --token $SURGE_TOKEN
         env:
-          SURGE_SUBDOMAIN: deploy-storybook-to-surge-sno2wman-hq
-          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
-
+          SURGE_SUBDOMAIN: ${{ env.SURGE_BASE_SUBDOMAIN }}
+      - if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          pnpx --no-install \
+            surge ./storybook-static \
+            https://${{ env.SURGE_SUBDOMAIN }}.surge.sh \
+            --token $SURGE_TOKEN
+        env:
+          SURGE_SUBDOMAIN: ${{ env.SURGE_BASE_SUBDOMAIN }}-$(echo ${{ env.SURGE_BASE_SUBDOMAIN }}-${{ github.head_ref }}-${{ github.sha }} | md5sum | awk '{print $1}')
+      - if: ${{ github.event_name == 'pull_request' && success() }}
+        env:
+          SURGE_DOMAIN: https://${{ env.SURGE_BASE_SUBDOMAIN }}-$(echo ${{ env.SURGE_BASE_SUBDOMAIN }}-${{ github.head_ref }}-${{ github.sha }} | md5sum | awk '{print $1}').surge.sh
+        run: |
+          curl -X POST \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -d "{\"body\": \"## Storybook Preview \n ${{ env.SURGE_DOMAIN }} \n <sub>Deploy on <a href='https://surge.sh'>surge.sh</a></sub>\"}" \
+              ${{ github.event.pull_request.comments_url }}
