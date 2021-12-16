@@ -37,6 +37,19 @@ jobs:
             --token $SURGE_TOKEN
         env:
           SURGE_SUBDOMAIN: ${{ env.SURGE_BASE_SUBDOMAIN }}
+      - if: ${{ github.event_name == 'push' && success() }}
+        uses: actions/github-script@v5
+        env:
+          SURGE_DOMAIN: https://${{ env.SURGE_SUBDOMAIN }}.surge.sh
+        with:
+          script: |
+            const { SURGE_DOMAIN } = process.env
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${ SURGE_DOMAIN }`
+            })
       - if: ${{ github.event_name == 'pull_request' }}
         run: |
           pnpx --no-install \
@@ -45,4 +58,16 @@ jobs:
             --token $SURGE_TOKEN
         env:
           SURGE_SUBDOMAIN: ${{ env.SURGE_BASE_SUBDOMAIN }}-$(echo ${{ env.SURGE_BASE_SUBDOMAIN }}-${{ github.head_ref }}-${{ github.sha }} | md5sum | awk '{print $1}')
-
+      - if: ${{ github.event_name == 'pull_request' && success() }}
+        uses: actions/github-script@v5
+        env:
+          SURGE_DOMAIN: https://${{ env.SURGE_BASE_SUBDOMAIN }}-$(echo ${{ env.SURGE_BASE_SUBDOMAIN }}-${{ github.head_ref }}-${{ github.sha }} | md5sum | awk '{print $1}').surge.sh
+        with:
+          script: |
+            const { SURGE_DOMAIN } = process.env
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${ SURGE_DOMAIN }`
+            })
