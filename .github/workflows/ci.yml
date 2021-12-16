@@ -33,7 +33,7 @@ jobs:
         run: |
           pnpx --no-install \
             surge ./storybook-static \
-            https://${{ env.SURGE_SUB_DOMAIN }}.surge.sh \
+            https://${{ env.SURGE_SUBDOMAIN }}.surge.sh \
             --token $SURGE_TOKEN
         env:
           SURGE_SUBDOMAIN: ${{ env.SURGE_BASE_SUBDOMAIN }}
@@ -41,7 +41,7 @@ jobs:
         run: |
           pnpx --no-install \
             surge ./storybook-static \
-            https://${{ env.SURGE_SUB_DOMAIN }}.surge.sh \
+            https://${{ env.SURGE_SUBDOMAIN }}.surge.sh \
             --token $SURGE_TOKEN
         env:
           SURGE_SUBDOMAIN: ${{ env.SURGE_BASE_SUBDOMAIN }}-$(echo ${{ env.SURGE_BASE_SUBDOMAIN }}-${{ github.head_ref }}-${{ github.sha }} | md5sum | awk '{print $1}')
