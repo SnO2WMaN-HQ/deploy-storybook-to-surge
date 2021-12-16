@@ -9,6 +9,8 @@ on:
 jobs:
   deploy-storybook:
     runs-on: ubuntu-latest
+    env:
+      SURGE_BASE_DOMAIN: sno2wman-hq-deploy-storybook-to-surge
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -29,11 +31,11 @@ jobs:
       - run: pnpx --no-install surge ./storybook-static https://$SURGE_SUBDOMAIN.surge.sh  --token $SURGE_TOKEN
         if: ${{ github.event_name == 'push' }}
         env:
-          SURGE_SUBDOMAIN: sno2wman-hq-deploy-storybook-to-surge
+          SURGE_SUBDOMAIN: ${{ env.SURGE_BASE_DOMAIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
       - run: pnpx --no-install surge ./storybook-static https://$(echo $SURGE_SUBDOMAIN | sed -e "s/\//-/").surge.sh  --token $SURGE_TOKEN
         if: ${{ github.event_name == 'pull_request' }}
         env:
-          SURGE_SUBDOMAIN: sno2wman-hq-deploy-storybook-to-surge-${{ github.ref_name }}-${{ github.sha }}
+          SURGE_SUBDOMAIN: ${{ env.SURGE_BASE_DOMAIN }}-${{ github.ref_name }}-${{ github.sha }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
