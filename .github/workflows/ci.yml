@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "main"
+  pull_request:
 
 jobs:
   deploy-storybook:
@@ -26,7 +27,13 @@ jobs:
             - args: [--frozen-lockfile]
       - run: pnpm run storybook:build
       - run: pnpx --no-install surge ./storybook-static https://$SURGE_SUBDOMAIN.surge.sh  --token $SURGE_TOKEN
+        if: ${{ github.event_name == 'push' }}
         env:
-          SURGE_SUBDOMAIN: deploy-storybook-to-surge-sno2wman-hq
+          SURGE_SUBDOMAIN: sno2wman-hq-deploy-storybook-to-surge
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+      - run: pnpx --no-install surge ./storybook-static https://$SURGE_SUBDOMAIN.surge.sh  --token $SURGE_TOKEN
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          SURGE_SUBDOMAIN: sno2wman-hq-deploy-storybook-to-surge-${{ github.ref_name }}-${{ github.sha }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
 
