@@ -10,7 +10,8 @@ jobs:
   deploy-storybook:
     runs-on: ubuntu-latest
     env:
-      SURGE_BASE_DOMAIN: sno2wman-storybook-surge
+      SURGE_BASE_SUBDOMAIN: sno2wman-storybook-surge
+      SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -28,21 +29,20 @@ jobs:
           run_install: |
             - args: [--frozen-lockfile]
       - run: pnpm run storybook:build
-      - run: |
+      - if: ${{ github.event_name == 'push' }}
+        run: |
           pnpx --no-install \
             surge ./storybook-static \
-            https://${{ env.SURGE_BASE_DOMAIN }}.surge.sh \
+            https://${{ env.SURGE_SUB_DOMAIN }}.surge.sh \
             --token $SURGE_TOKEN
-        if: ${{ github.event_name == 'push' }}
         env:
-          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
-      - run: |
+          SURGE_SUBDOMAIN: ${{ env.SURGE_BASE_SUBDOMAIN }}
+      - if: ${{ github.event_name == 'pull_request' }}
+        run: |
           pnpx --no-install \
             surge ./storybook-static \
-            https://${{ env.SURGE_BASE_DOMAIN }}-$(echo $SURGE_URL_HASH_SEED | md5sum | awk '{print $1}').surge.sh \
+            https://${{ env.SURGE_SUB_DOMAIN }}.surge.sh \
             --token $SURGE_TOKEN
-        if: ${{ github.event_name == 'pull_request' }}
         env:
-          SURGE_URL_HASH_SEED: ${{ env.SURGE_BASE_DOMAIN }}-${{ github.head_ref }}-${{ github.sha }}
-          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+          SURGE_SUBDOMAIN: ${{ env.SURGE_BASE_SUBDOMAIN }}-$(echo ${{ env.SURGE_BASE_SUBDOMAIN }}-${{ github.head_ref }}-${{ github.sha }} | md5sum | awk '{print $1}')
 
