@@ -31,7 +31,7 @@ jobs:
         env:
           SURGE_SUBDOMAIN: sno2wman-hq-deploy-storybook-to-surge
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
-      - run: pnpx --no-install surge ./storybook-static https://$SURGE_SUBDOMAIN.surge.sh  --token $SURGE_TOKEN
+      - run: pnpx --no-install surge ./storybook-static https://$(echo $SURGE_SUBDOMAIN | md5sum | awk '{print $1}').surge.sh  --token $SURGE_TOKEN
         if: ${{ github.event_name == 'pull_request' }}
         env:
           SURGE_SUBDOMAIN: sno2wman-hq-deploy-storybook-to-surge-${{ github.ref_name }}-${{ github.sha }}
